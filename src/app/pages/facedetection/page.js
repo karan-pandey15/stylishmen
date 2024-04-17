@@ -1,47 +1,4 @@
-// 'use client';
-// import React, { useState, useRef, useEffect } from 'react';
-// import * as faceapi from 'face-api.js';
-// import './Facedetection.css';
 
-// const FaceScanner = () => {
-//   const videoRef = useRef(null);
-//   const [isLoaded, setIsLoaded] = useState(false);
-//   const [isDetecting, setIsDetecting] = useState(false);
-//   const [errorMessage, setErrorMessage] = useState('');
-
-//   useEffect(() => {
-//     const loadModels = async () => {
-//       try {
-//         await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.23.1/models');
-//         await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.23.1/models');
-//         await faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.23.1/models');
-//         await faceapi.nets.faceExpressionNet.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.23.1/models');
-//         setIsLoaded(true);
-//       } catch (error) {
-//         console.error('Error loading models:', error);
-//         setErrorMessage('Error loading face detection models.');
-//       }
-//     };
-
-//     loadModels();
-//   }, []);
-
-//   // Rest of the code for camera opening and face detection...
-
-//   return (
-//     <div>
-//       {errorMessage && <p>{errorMessage}</p>}
-//       {/* Render camera and button only if models are loaded */}
-//       {isLoaded && !isDetecting && (
-//         <button onClick={handleOpenCamera} style={{ backgroundColor: 'gray', color: 'white', textAlign: 'center', padding: '10px', border: '2px solid black' }}>
-//           Open Camera
-//         </button>
-//       )}
-//       <video ref={videoRef} width="640" height="480" autoPlay muted></video>
-//     </div>
-//   );
-// };
-// export default FaceScanner;
 
 'use client'
 import React, { useState } from 'react';
@@ -71,27 +28,34 @@ const SkinColorAnalyzer = () => {
       canvas.height = img.height;
       context.drawImage(img, 0, 0, img.width, img.height);
 
+      // Define skin color ranges
+      const skinColors = {
+        fair: { r: [200, 255], g: [150, 200], b: [100, 150] },
+        brown: { r: [150, 200], g: [100, 150], b: [50, 100] },
+        dark: { r: [100, 150], g: [50, 100], b: [20, 50] },
+        black: { r: [0, 100], g: [0, 100], b: [0, 100] }
+      };
+
       // Get the RGB values of the center pixel
       const pixelData = context.getImageData(img.width / 2, img.height / 2, 1, 1).data;
       const [r, g, b] = pixelData;
 
-      // Check skin color based on RGB values
-      if (r >= 200 && g >= 150 && b >= 100) {
-        alert('Skin color: Fair');
-      } else if (r >= 150 && g >= 100 && b >= 50) {
-        alert('Skin color: Brown');
-      } else if (r >= 100 && g >= 50 && b >= 20) {
-        alert('Skin color: Dark');
-      } else if (r < 100 && g < 100 && b < 100) {
-        alert('Skin color: Black');
-      } else {
-        alert('Skin color: None of these');
+      // Check if the color matches any skin color range
+      let skinColor = 'None of these';
+      for (const color in skinColors) {
+        const { r: rRange, g: gRange, b: bRange } = skinColors[color];
+        if (r >= rRange[0] && r <= rRange[1] && g >= gRange[0] && g <= gRange[1] && b >= bRange[0] && b <= bRange[1]) {
+          skinColor = color;
+          break;
+        }
       }
+
+      alert(`Skin color: ${skinColor}`);
     };
   };
 
   return (
-    <div>
+    <div style={{position:'absolute',top:'30%',left:'50%',transform:'translate(-50%,-50%)'}} >
       <Webcam
         audio={false}
         ref={webcamRef}
@@ -101,9 +65,10 @@ const SkinColorAnalyzer = () => {
         videoConstraints={{ facingMode: 'user' }}
       />
       <br />
-      <button style={{border:'2px solid red'}} onClick={capture}>Capture</button>
-      {image && <button onClick={analyzeColor}>Analyze Color</button>}
+      <button style={{padding:'10px',fontWeight:'bold',borderRadius:'10px',fontSize:'18px',backgroundColor:'#F5EDDC'}} onClick={capture}>Capture</button>
+      {image && <button style={{padding:'10px',fontWeight:'bold',borderRadius:'10px',fontSize:'18px',backgroundColor:'#F5EDDC',margin:'20px 0'}}   onClick={analyzeColor}>Analyze Color</button>}
       {image && <img src={image} alt="Captured" />}
+
     </div>
   );
 };
