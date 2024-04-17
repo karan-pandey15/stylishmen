@@ -118,10 +118,10 @@ const Footer = () => {
                             </li>
                             <li className=" ">
                                 <Link
-                                    href="#"
+                                    href="/pages/productregister"
                                     className=""
                                 >
-                                    Checkout
+                                    List Products
                                 </Link>
 
                             </li>
