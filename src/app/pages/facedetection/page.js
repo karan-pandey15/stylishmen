@@ -44,81 +44,68 @@
 // export default FaceScanner;
 
 'use client'
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
+import Webcam from 'react-webcam';
 
-const SkinColorDetector = () => {
-  const [result, setResult] = useState(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  
-  const handleScan = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
-      videoRef.current.play(); // Play the video
-      detectSkinColor(); // Call detectSkinColor function after the stream starts
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-    }
-  };
+const SkinColorAnalyzer = () => {
+  const [image, setImage] = useState(null);
+  const webcamRef = React.useRef(null);
 
-  const detectSkinColor = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const width = video.videoWidth;
-    const height = video.videoHeight;
+  const capture = React.useCallback(() => {
+    const imageSrc = webcamRef.current.getScreenshot();
+    setImage(imageSrc);
+  }, [webcamRef, setImage]);
 
-    canvas.width = width;
-    canvas.height = height;
+  const analyzeColor = () => {
+    if (!image) return;
 
-    ctx.drawImage(video, 0, 0, width, height);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
 
-    const imageData = ctx.getImageData(0, 0, width, height);
-    const data = imageData.data;
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.src = image;
 
-    let redSum = 0;
-    let greenSum = 0;
-    let blueSum = 0;
-    let totalPixels = 0;
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      context.drawImage(img, 0, 0, img.width, img.height);
 
-    for (let i = 0; i < data.length; i += 4) {
-      const red = data[i];
-      const green = data[i + 1];
-      const blue = data[i + 2];
-      const alpha = data[i + 3];
+      // Get the RGB values of the center pixel
+      const pixelData = context.getImageData(img.width / 2, img.height / 2, 1, 1).data;
+      const [r, g, b] = pixelData;
 
-      // Skip transparent pixels
-      if (alpha === 0) continue;
-
-      redSum += red;
-      greenSum += green;
-      blueSum += blue;
-      totalPixels++;
-    }
-
-    const avgRed = redSum / totalPixels;
-    const avgGreen = greenSum / totalPixels;
-    const avgBlue = blueSum / totalPixels;
-
-    const avgColor = `rgb(${avgRed.toFixed(0)}, ${avgGreen.toFixed(0)}, ${avgBlue.toFixed(0)})`;
-    setResult(avgColor);
+      // Check skin color based on RGB values
+      if (r >= 200 && g >= 150 && b >= 100) {
+        alert('Skin color: Fair');
+      } else if (r >= 150 && g >= 100 && b >= 50) {
+        alert('Skin color: Brown');
+      } else if (r >= 100 && g >= 50 && b >= 20) {
+        alert('Skin color: Dark');
+      } else if (r < 100 && g < 100 && b < 100) {
+        alert('Skin color: Black');
+      } else {
+        alert('Skin color: None of these');
+      }
+    };
   };
 
   return (
     <div>
-      <h1>Skin Color Detector</h1>
-      <button onClick={handleScan}>Open Camera</button>
-      <video ref={videoRef} autoPlay style={{ display: 'none' }}></video>
-      <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
-      {result && (
-        <div>
-          <h2>Result:</h2>
-          <p>Your skin color is: {result}</p>
-        </div>
-      )}
+      <Webcam
+        audio={false}
+        ref={webcamRef}
+        screenshotFormat="image/jpeg"
+        width={640}
+        height={480}
+        videoConstraints={{ facingMode: 'user' }}
+      />
+      <br />
+      <button style={{border:'2px solid red'}} onClick={capture}>Capture</button>
+      {image && <button onClick={analyzeColor}>Analyze Color</button>}
+      {image && <img src={image} alt="Captured" />}
     </div>
   );
 };
 
-export default SkinColorDetector;
+export default SkinColorAnalyzer;
