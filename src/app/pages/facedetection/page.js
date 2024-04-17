@@ -102,31 +102,39 @@ const SkinColorAnalyzer = () => {
       canvas.height = img.height;
       context.drawImage(img, 0, 0, img.width, img.height);
 
-      // Define skin color RGB values
+      // Define skin color ranges
       const skinColors = {
-        'Fair/Light Skin': { r: 240, g: 217, b: 181 },
-        'Medium Skin/Tan': { r: 210, g: 180, b: 140 },
-        'Olive Skin': { r: 184, g: 151, b: 120 },
-        'Brown Skin': { r: 139, g: 69, b: 19 },
-        'Dark Skin': { r: 92, g: 58, b: 33 },
-        'Black Skin': { r: 26, g: 26, b: 26 }
+        'Fair/Light Skin': { r: [200, 255], g: [150, 200], b: [100, 150] },
+        'Medium Skin/Tan': { r: [150, 210], g: [100, 180], b: [50, 140] },
+        'Olive Skin': { r: [120, 184], g: [80, 151], b: [30, 120] },
+        'Brown Skin': { r: [90, 139], g: [40, 69], b: [0, 19] },
+        'Dark Skin': { r: [50, 92], g: [20, 58], b: [10, 33] },
+        'Black Skin': { r: [0, 26], g: [0, 26], b: [0, 26] }
       };
 
       // Get the RGB values of the center pixel
       const pixelData = context.getImageData(img.width / 2, img.height / 2, 1, 1).data;
       const [r, g, b] = pixelData;
 
-      // Compare with skin color RGB values
-      let result = 'None of these';
+      // Check if the color matches any skin color range with at least 10% match
+      let result = null;
       for (const color in skinColors) {
-        const { r: targetR, g: targetG, b: targetB } = skinColors[color];
-        if (r === targetR && g === targetG && b === targetB) {
+        const { r: [minR, maxR], g: [minG, maxG], b: [minB, maxB] } = skinColors[color];
+        const rMatch = (r >= minR && r <= maxR) ? 1 : 0;
+        const gMatch = (g >= minG && g <= maxG) ? 1 : 0;
+        const bMatch = (b >= minB && b <= maxB) ? 1 : 0;
+        const matchPercentage = (rMatch + gMatch + bMatch) / 3 * 100;
+        if (matchPercentage >= 10) {
           result = color;
           break;
         }
       }
 
-      alert(`Skin color: ${result}`);
+      if (result) {
+        alert(`Skin color: ${result}`);
+      } else {
+        alert(`No matching skin color found.`);
+      }
     };
   };
 
@@ -141,11 +149,12 @@ const SkinColorAnalyzer = () => {
         videoConstraints={{ facingMode: 'user' }}
       />
       <br />
-      <button style={{padding:'10px',fontWeight:'bold',borderRadius:'10px',fontSize:'18px',backgroundColor:'#D2B48C'}} onClick={capture}>ClickMe</button>
-      {image && <button style={{padding:'10px',fontWeight:'bold',borderRadius:'10px',fontSize:'18px',backgroundColor:'#F5EDDC',margin:'20px '}}   onClick={analyzeColor}>Analyze Color</button>}
+      <button style={{padding:'10px',fontWeight:'bold',borderRadius:'10px',fontSize:'18px',backgroundColor:'#D2B48C'}} onClick={capture}>Capture the Image</button>
+      {image && <button style={{padding:'10px',fontWeight:'bold',borderRadius:'10px',fontSize:'18px',backgroundColor:'#F5EDDC',margin:'20px 0'}}   onClick={analyzeColor}>Analyze Color</button>}
       {image && <img src={image} alt="Captured" />}
     </div>
   );
 };
 
 export default SkinColorAnalyzer;
+
